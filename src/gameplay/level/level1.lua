@@ -5,11 +5,12 @@ M.data = {
     map = {
         width = 3,
         height = 1,
+        default = "d",
         info = {
-            " ", " ", "@",
+            "d", "d", "@",
         },
         item = {
-            " ", " ", "@",
+            "d", "d", "@",
         }
     },
     p1 = {

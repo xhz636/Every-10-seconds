@@ -56,7 +56,7 @@ local function move_player(map, player, op, other)
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(y - 1) * map.width + base_x]
-            if object == "#" then
+            if object == "t" or object == "b" or object == "f" then
                 return MOVE_STATE.DONE
             end
             if other then
@@ -78,7 +78,7 @@ local function move_player(map, player, op, other)
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(y - 1) * map.width + base_x]
-            if object == "#" then
+            if object == "t" or object == "b" or object == "f" then
                 return MOVE_STATE.DONE
             end
             if other then
@@ -100,7 +100,7 @@ local function move_player(map, player, op, other)
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(base_y - 1) * map.width + x]
-            if object == "#" then
+            if object == "t" or object == "b" or object == "f" then
                 return MOVE_STATE.DONE
             end
             if other then
@@ -122,7 +122,7 @@ local function move_player(map, player, op, other)
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(base_y - 1) * map.width + x]
-            if object == "#" then
+            if object == "t" or object == "b" or object == "f" then
                 return MOVE_STATE.DONE
             end
             if other then

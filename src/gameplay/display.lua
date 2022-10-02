@@ -10,16 +10,32 @@ function M:init(game)
     M.background_image = love.graphics.newImage("resources/image/background.png")
     M.end_background_image = love.graphics.newImage("resources/image/end_background.png")
     M.avatar_image = love.graphics.newImage("resources/image/avatar.png")
+    M.avatar_up_image = love.graphics.newImage("resources/image/avatar_up.png")
+    M.avatar_down_image = love.graphics.newImage("resources/image/avatar_down.png")
     M.up_image = love.graphics.newImage("resources/image/up.png")
     M.down_image = love.graphics.newImage("resources/image/down.png")
     M.recover_image = love.graphics.newImage("resources/image/recover.png")
     M.flag_image = love.graphics.newImage("resources/image/flag.png")
     -- road
-    M.road_dark_image = love.graphics.newImage("resources/image/roaddark.png")
+    M.road_stone_image = love.graphics.newImage("resources/image/roadstone.png")
     M.road_dirt_image = love.graphics.newImage("resources/image/roaddirt.png")
+    M.road_grass_image = love.graphics.newImage("resources/image/roadgrass.png")
     M.road_red_image = love.graphics.newImage("resources/image/roadred.png")
+    M.road_line_image = love.graphics.newImage("resources/image/roadline.png")
     -- wall
-    M.wall_green_image = love.graphics.newImage("resources/image/wallgreen.png")
+    M.wall_tree_image = love.graphics.newImage("resources/image/walltree.png")
+    M.wall_brick_image = love.graphics.newImage("resources/image/wallbrick.png")
+    M.wall_field_image = love.graphics.newImage("resources/image/wallfield.png")
+    M.image_map = {
+        s = M.road_stone_image,
+        d = M.road_dirt_image,
+        g = M.road_grass_image,
+        r = M.road_red_image,
+        l = M.road_line_image,
+        t = M.wall_tree_image,
+        b = M.wall_brick_image,
+        f = M.wall_field_image,
+    }
     -- second
     M.second_images = {}
     for i = 0, 10 do
@@ -52,6 +68,8 @@ function M:start_level(data)
     M.fall_audio:stop()
     M.win_audio:stop()
     M.timeout_audio:stop()
+    M:update_player_avatar_image(data.p1)
+    M:update_player_avatar_image(data.p2)
 end
 
 function M:draw(time, start_time, count_down)
@@ -100,18 +118,33 @@ function M:get_grid_pos(x, y)
     return pos_x, pos_y
 end
 
+function M:update_player_avatar_image(player)
+    if not player then
+        return
+    end
+    local speed = player.speed or 2
+    if speed == 1 then
+        player.image = M.avatar_down_image
+    elseif speed == 2 then
+        player.image = M.avatar_image
+    elseif speed == 4 then
+        player.image = M.avatar_up_image
+    end
+end
+
 function M:draw_map(map)
     for y = 1, map.height do
         for x = 1, map.width do
             local object = map.info[(y - 1) * map.width + x]
-            local pos_x, pos_y = M:get_grid_pos(x, y)
-            if object == " " or object == "@" then
-                love.graphics.draw(M.road_dirt_image, pos_x, pos_y)
-            elseif object == "#" then
-                love.graphics.draw(M.wall_green_image, pos_x, pos_y)
-            end
-            if object == "@" then
-                love.graphics.draw(M.flag_image, pos_x, pos_y)
+            if object ~= "_" then
+                local pos_x, pos_y = M:get_grid_pos(x, y)
+                local image = M.image_map[object] or M.image_map[map.default]
+                if image then
+                    love.graphics.draw(image, pos_x, pos_y)
+                end
+                if object == "@" then
+                    love.graphics.draw(M.flag_image, pos_x, pos_y)
+                end
             end
         end
     end
@@ -167,18 +200,19 @@ function M:draw_player(player, time)
             local y_delta = get_y_delta(time_scale, M.grid_size / 2)
             local x = utils:lerp(player.old_x, player.new_x, time_scale)
             local y = utils:lerp(player.old_y, player.new_y, time_scale) + y_delta
-            love.graphics.draw(M.avatar_image, x, y)
+            love.graphics.draw(player.image, x, y)
             return
         end
     end
     local pos_x, pos_y = M:get_grid_pos(player.x, player.y)
-    love.graphics.draw(M.avatar_image, pos_x, pos_y)
+    love.graphics.draw(player.image, pos_x, pos_y)
     -- 到达目标点了
     local logic = require("gameplay.logic")
     local pick = logic:clear_pending_delete_item()
     if pick then
         M.pick_audio:play()
     end
+    M:update_player_avatar_image(player)
     if not M.done then
         if M.game.state == M.game.GAME_STATE.WIN then
             M.win_audio:play()
@@ -204,7 +238,7 @@ function M:draw_falling_player(player, time)
         return
     end
     local x, y = M:get_grid_pos(player.x, player.y)
-    love.graphics.draw(M.avatar_image, x, y + delta_y)
+    love.graphics.draw(player.image, x, y + delta_y)
 end
 
 function M:draw_load_player(player, time)
@@ -218,7 +252,7 @@ function M:draw_load_player(player, time)
     local max_y = 1 / 2 * a * max_t * max_t
     local delta_y = 1 / 2 * a * t * t
     local x, y = M:get_grid_pos(player.x, player.y)
-    love.graphics.draw(M.avatar_image, x, y - max_y + delta_y)
+    love.graphics.draw(player.image, x, y - max_y + delta_y)
     if delta_time >= M.loading_duration then
         M.jump_audio:play()
         M.loading_time = nil
