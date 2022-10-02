@@ -3,6 +3,10 @@ local M = {}
 M.grid_size = 32
 M.grid_draw_size = 30
 
+function M:init()
+    M.background_image = love.graphics.newImage("resources/image/background.png")
+end
+
 function M:draw(data)
     M:draw_background()
     M:draw_map(data.map)
@@ -12,6 +16,8 @@ function M:draw(data)
 end
 
 function M:draw_background()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(M.background_image, 0, 0)
 end
 
 function M:draw_map(map)

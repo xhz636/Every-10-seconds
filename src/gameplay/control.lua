@@ -1,24 +1,21 @@
 local M = {}
 
-local key_map = {
-    up = "w",
-    down = "s",
-    left = "a",
-    right = "d",
-    w = "w",
-    s = "s",
-    a = "a",
-    d = "d",
+local vaild_key = {
+    w = true,
+    s = true,
+    a = true,
+    d = true,
 }
 
-M.op = nil
+function M:init()
+    M.op = nil
+end
 
 function M:on_move(key)
-    local k = key_map[key]
-    if not k then
+    if not vaild_key[key] then
         return false
     end
-    M.op = k
+    M.op = key
     return true
 end
 

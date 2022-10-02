@@ -20,6 +20,7 @@ function M:init()
 end
 
 function M:start_level(level_id)
+    print("start_level", level_id)
     local level = M.levels[level_id]
     M.cur_level = utils:copy_table(level)
     M.cur_level_id = level_id
@@ -203,6 +204,15 @@ function M:is_win()
         return false
     end
     return true
+end
+
+function M:update(dt)
+end
+
+function M:draw()
+end
+
+function M:keypressed(key)
 end
 
 return M
