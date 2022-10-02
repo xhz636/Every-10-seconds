@@ -8,7 +8,8 @@ local GAME_STATE = {
     PLAYING = 1,
     WIN = 2,
     LOSE = 3,
-    PASS = 4,
+    TIMEOUT = 4,
+    PASS = 5,
 }
 
 function M:init()
@@ -23,6 +24,11 @@ function M:init()
     logic:init()
     display:init()
     control:init()
+    M.state_win_image = love.graphics.newImage("resources/image/state_win.png")
+    M.state_lose_image = love.graphics.newImage("resources/image/state_lose.png")
+    M.state_timeout_image = love.graphics.newImage("resources/image/state_timeout.png")
+    M.state_base_x = 1260
+    M.state_base_y = 450
 end
 
 function M:start(level_id)
@@ -34,6 +40,7 @@ function M:start(level_id)
     M.op_step = 0
     M.state = GAME_STATE.PLAYING
     logic:start_level(level_id)
+    display:start_level(logic.cur_level.data)
     control:reset()
 end
 
@@ -47,12 +54,20 @@ function M:quit()
     navi:enter_select(M.cur_level_id)
 end
 
+function M:show_end()
+    logic:end_drop()
+end
+
 function M:update(dt)
     M.time  = M.time + dt
     if not M.playing then
         return
     end
     if M.state ~= GAME_STATE.PLAYING then
+        if M.state == GAME_STATE.PASS and M.time > M.pass_time + 1.5 then
+            M:restart()
+            display:set_is_pass()
+        end
         return
     end
     -- 开始移动了
@@ -66,7 +81,7 @@ function M:update(dt)
         M.time_step = M.time_step + 1
         if not logic:is_win() then
             if M.op_step >= M.count_down then
-                M.state = GAME_STATE.LOSE
+                M.state = GAME_STATE.TIMEOUT
             end
         else
             M.state = GAME_STATE.WIN
@@ -83,41 +98,34 @@ function M:draw()
     if not M.playing then
         return
     end
-    display:draw(logic.cur_level.data)
+    display:draw(M.time, M.time_start, M.count_down)
+    local state_image = nil
     if M.state == GAME_STATE.WIN then
-        love.graphics.setColor(1, 1, 0)
-        love.graphics.print("win! press Enter to next level", 0, 0)
+        state_image = M.state_win_image
     end
     if M.state == GAME_STATE.LOSE then
-        love.graphics.setColor(1, 0, 0)
-        love.graphics.print("lose! press R to restart", 0, 0)
+        state_image = M.state_lose_image
     end
-    if M.state == GAME_STATE.PASS then
-        love.graphics.setColor(1, 1, 0)
-        love.graphics.print("pass! thank you for playing", 0, 0)
+    if M.state == GAME_STATE.TIMEOUT then
+        state_image = M.state_timeout_image
     end
-    -- 开始移动后进行倒计时
-    if M.time_start then
-        local left_time = M.count_down - (M.time - M.time_start)
-        if left_time >= 0 then
-            love.graphics.setColor(1, 0, 0)
-            love.graphics.print(math.ceil(left_time), 0, 30)
-        else
-            love.graphics.setColor(1, 0, 0)
-            love.graphics.print(0, 0, 30)
-        end
+    if state_image and display:is_done() then
+        love.graphics.setColor(1, 1, 1)
+        local x = M.state_base_x - state_image:getWidth() / 2
+        local y = M.state_base_y - state_image:getHeight() / 2
+        love.graphics.draw(state_image, x, y)
     end
 end
 
 function M:keypressed(key)
-    if not M.playing then
+    if not M.playing or display:is_loading() then
         return
     end
     if key == "escape" then
         M:quit()
         return
     end
-    if key == "r" then
+    if key == "r" and M.state ~= GAME_STATE.WIN and M.state ~= GAME_STATE.PASS then
         M:restart()
         return
     end
@@ -128,6 +136,9 @@ function M:keypressed(key)
                 M:start(next_level)
             else
                 M.state = GAME_STATE.PASS
+                M.pass_time = M.time
+                M.cur_level_id = 1
+                M:show_end()
             end
         end
         return
@@ -135,10 +146,13 @@ function M:keypressed(key)
     if M.state == GAME_STATE.LOSE then
         return
     end
-    if control:on_move(key) then
-        if not M.time_start then
-            M.time_start = M.time
-            M.time_step = M.time_start + 0.3
+    if M.state == GAME_STATE.PLAYING then
+        if control:on_move(key) then
+            if not M.time_start then
+                M.time_start = M.time
+                -- 0.3s缓存输入
+                M.time_step = M.time_start + 0.3
+            end
         end
     end
 end

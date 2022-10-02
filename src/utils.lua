@@ -12,4 +12,8 @@ function M:copy_table(table)
     return copy
 end
 
+function M:lerp(a, b, delta)
+    return a * (1 - delta) + b * delta
+end
+
 return M

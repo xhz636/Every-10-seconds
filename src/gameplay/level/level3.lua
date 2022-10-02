@@ -1,7 +1,7 @@
 local M = {}
 
 M.data = {
-    name = "SpeedUp",
+    name = "speedup",
     map = {
         width = 7,
         height = 5,

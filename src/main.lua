@@ -9,7 +9,7 @@ function love.load()
 end
 
 function love.update(dt)
-    fps = 1 / dt
+    -- fps = 1 / dt
     navi:update(dt)
     game:update(dt)
 end
@@ -17,8 +17,8 @@ end
 function love.draw()
     navi:draw()
     game:draw()
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print(math.ceil(fps), 0, 0)
+    -- love.graphics.setColor(0, 0, 0)
+    -- love.graphics.print(math.ceil(fps), 0, 0)
 end
 
 function love.keypressed(key)

@@ -37,6 +37,8 @@ local function move_init(player)
     player.base_x = player.x
     player.base_y = player.y
     player.state = MOVE_STATE.PENDING
+    player.moving_time = nil
+    player.moving_start = true
 end
 
 local function move_player(map, player, op, other)
@@ -49,6 +51,8 @@ local function move_player(map, player, op, other)
     if op == "w" then
         for y = player.y - 1, base_y - speed, -1 do
             if y <= 0 or y > map.height then
+                player.y = y
+                player.falling = true
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(y - 1) * map.width + base_x]
@@ -69,6 +73,8 @@ local function move_player(map, player, op, other)
     elseif op == "s" then
         for y = player.y + 1, base_y + speed, 1 do
             if y <= 0 or y > map.height then
+                player.y = y
+                player.falling = true
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(y - 1) * map.width + base_x]
@@ -89,6 +95,8 @@ local function move_player(map, player, op, other)
     elseif op == "a" then
         for x = player.x - 1, base_x - speed, -1 do
             if x <= 0 or x > map.width then
+                player.x = x
+                player.falling = true
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(base_y - 1) * map.width + x]
@@ -109,6 +117,8 @@ local function move_player(map, player, op, other)
     elseif op == "d" then
         for x = player.x + 1, base_x + speed, 1 do
             if x <= 0 or x > map.width then
+                player.x = x
+                player.falling = true
                 return MOVE_STATE.FAIL
             end
             local object = map.info[(base_y - 1) * map.width + x]
@@ -147,7 +157,9 @@ local function handle_item(map, player)
         get = true
     end
     if get then
-        map.item[(player.y - 1) * map.width + player.x] = " "
+        local pending_delete_item = map.pending_delete_item or {}
+        map.pending_delete_item = pending_delete_item
+        table.insert(pending_delete_item, {x = player.x, y = player.y})
     end
 end
 
@@ -166,6 +178,7 @@ function M:do_op(op)
     local map = level.data.map
     local p1 = level.data.p1
     local p2 = level.data.p2
+    M:clear_pending_delete_item()
     move_init(p1)
     move_init(p2)
     p1.state = move_player(map, p1, op, p2)
@@ -192,6 +205,17 @@ function M:do_op(op)
     return true
 end
 
+function M:clear_pending_delete_item()
+    local map = M.cur_level.data.map
+    if not map.pending_delete_item then
+        return
+    end
+    for i, item in ipairs(map.pending_delete_item) do
+        map.item[(item.y - 1) * map.width + item.x] = " "
+    end
+    map.pending_delete_item = nil
+end
+
 function M:is_win()
     local level = M.cur_level
     local succ1 = in_point(level.data.map, level.data.p1)
@@ -204,6 +228,25 @@ function M:is_win()
         return false
     end
     return true
+end
+
+function M:end_drop()
+    local level = M.cur_level
+    local map = level.data.map
+    local succ1 = in_point(map, level.data.p1)
+    local succ2 = in_point(map, level.data.p2)
+    if not succ1 then
+        local x = level.data.p1.x
+        local y = level.data.p1.y
+        map.info[(y - 1) * map.width + x] = "_"
+        level.data.p1.falling = true
+    end
+    if not succ2 then
+        local x = level.data.p2.x
+        local y = level.data.p2.y
+        map.info[(y - 1) * map.width + x] = "_"
+        level.data.p2.falling = true
+    end
 end
 
 function M:update(dt)

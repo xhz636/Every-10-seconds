@@ -76,11 +76,11 @@ function M:draw()
         love.graphics.draw(M.level.image, 0, 0)
         local idx = M.level.cursor_idx_x + (M.level.cursor_idx_y - 1) * 5
         local cursor_x, cursor_y = get_level_center(idx)
-        love.graphics.draw(M.level.cursor, cursor_x - 30, cursor_y - 75 - 60)
+        love.graphics.draw(M.level.cursor, cursor_x - M.level.cursor:getWidth() / 2, cursor_y - 75 - M.level.cursor:getHeight())
         for i = 1, 10 do
             if not M.unlock[i] then
                 local x, y = get_level_center(i)
-                love.graphics.draw(M.level.lock, x - 45, y - 47)
+                love.graphics.draw(M.level.lock, x - M.level.lock:getWidth() / 2, y - M.level.lock:getHeight() / 2)
             end
         end
     end
