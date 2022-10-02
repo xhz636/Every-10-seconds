@@ -5,7 +5,8 @@ local M = {}
 M.grid_size = 60
 M.loading_duration = 1
 
-function M:init()
+function M:init(game)
+    M.game = game
     M.background_image = love.graphics.newImage("resources/image/background.png")
     M.end_background_image = love.graphics.newImage("resources/image/end_background.png")
     M.avatar_image = love.graphics.newImage("resources/image/avatar.png")
@@ -24,6 +25,12 @@ function M:init()
     for i = 0, 10 do
         M.second_images[i] = love.graphics.newImage("resources/image/second_" .. i .. ".png")
     end
+    -- audio
+    M.jump_audio = love.audio.newSource("resources/audio/jump.wav", "static")
+    M.pick_audio = love.audio.newSource("resources/audio/pick.wav", "static")
+    M.fall_audio = love.audio.newSource("resources/audio/fall.wav", "static")
+    M.win_audio = love.audio.newSource("resources/audio/win.wav", "static")
+    M.timeout_audio = love.audio.newSource("resources/audio/timeout.wav", "static")
 end
 
 function M:start_level(data)
@@ -39,6 +46,12 @@ function M:start_level(data)
     M.is_pass = false
     M.loading_time = nil
     M.loaded = false
+    M.count_done = false
+    M.jump_audio:stop()
+    M.pick_audio:stop()
+    M.fall_audio:stop()
+    M.win_audio:stop()
+    M.timeout_audio:stop()
 end
 
 function M:draw(time, start_time, count_down)
@@ -142,12 +155,13 @@ function M:draw_player(player, time)
         player.old_y = old_y
         player.new_x = new_x
         player.new_y = new_y
+        M.jump_audio:play()
     end
     -- 0.6s为移动表现时间
     if player.moving_time then
-        M.done = false
         local delta_time = time - player.moving_time
         if delta_time <= 0.6 then
+            M.done = false
             local time_scale = delta_time / 0.6
             -- 移动升高为半个格子
             local y_delta = get_y_delta(time_scale, M.grid_size / 2)
@@ -161,11 +175,20 @@ function M:draw_player(player, time)
     love.graphics.draw(M.avatar_image, pos_x, pos_y)
     -- 到达目标点了
     local logic = require("gameplay.logic")
-    logic:clear_pending_delete_item()
+    local pick = logic:clear_pending_delete_item()
+    if pick then
+        M.pick_audio:play()
+    end
+    if not M.done then
+        if M.game.state == M.game.GAME_STATE.WIN then
+            M.win_audio:play()
+        end
+    end
     M.done = true
     if player.falling then
         player.fall_start_time = time
         M.done = false
+        M.fall_audio:play()
     end
 end
 
@@ -197,6 +220,7 @@ function M:draw_load_player(player, time)
     local x, y = M:get_grid_pos(player.x, player.y)
     love.graphics.draw(M.avatar_image, x, y - max_y + delta_y)
     if delta_time >= M.loading_duration then
+        M.jump_audio:play()
         M.loading_time = nil
     end
 end
@@ -220,6 +244,10 @@ function M:draw_second(time, start_time, count_down)
     local x = base_x - image:getWidth() * scale / 2
     local y = base_y - image:getHeight() * scale / 2
     love.graphics.draw(M.second_images[num], x, y, 0, scale, scale)
+    if not M.count_done and M.game.state == M.game.GAME_STATE.TIMEOUT and num == 0 then
+        M.count_done = true
+        M.timeout_audio:play()
+    end
 end
 
 function M:is_done()

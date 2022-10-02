@@ -208,12 +208,15 @@ end
 function M:clear_pending_delete_item()
     local map = M.cur_level.data.map
     if not map.pending_delete_item then
-        return
+        return false
     end
+    local has_pick = false
     for i, item in ipairs(map.pending_delete_item) do
         map.item[(item.y - 1) * map.width + item.x] = " "
+        has_pick = true
     end
     map.pending_delete_item = nil
+    return has_pick
 end
 
 function M:is_win()

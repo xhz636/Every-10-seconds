@@ -23,6 +23,7 @@ function M:init()
     M.unlock = {
         [1] = true,
     }
+    M.select_audio = love.audio.newSource("resources/audio/select.wav", "static")
 end
 
 function M:leave_welcome()
@@ -110,7 +111,10 @@ function M:keypressed(key)
             else
                 -- todo 一些未解锁的表现
             end
+        else
+            return
         end
+        M.select_audio:play()
     end
 end
 

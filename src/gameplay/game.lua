@@ -4,7 +4,7 @@ local display = require("gameplay.display")
 
 local M = {}
 
-local GAME_STATE = {
+M.GAME_STATE = {
     PLAYING = 1,
     WIN = 2,
     LOSE = 3,
@@ -20,9 +20,9 @@ function M:init()
     M.time_start = nil
     M.time_step = nil
     M.op_step = 0
-    M.state = GAME_STATE.PLAYING
+    M.state = M.GAME_STATE.PLAYING
     logic:init()
-    display:init()
+    display:init(M)
     control:init()
     M.state_win_image = love.graphics.newImage("resources/image/state_win.png")
     M.state_lose_image = love.graphics.newImage("resources/image/state_lose.png")
@@ -38,7 +38,7 @@ function M:start(level_id)
     M.time_start = nil
     M.time_step = nil
     M.op_step = 0
-    M.state = GAME_STATE.PLAYING
+    M.state = M.GAME_STATE.PLAYING
     logic:start_level(level_id)
     display:start_level(logic.cur_level.data)
     control:reset()
@@ -63,8 +63,8 @@ function M:update(dt)
     if not M.playing then
         return
     end
-    if M.state ~= GAME_STATE.PLAYING then
-        if M.state == GAME_STATE.PASS and M.time > M.pass_time + 1.5 then
+    if M.state ~= M.GAME_STATE.PLAYING then
+        if M.state == M.GAME_STATE.PASS and M.time > M.pass_time + 1.5 then
             M:restart()
             display:set_is_pass()
         end
@@ -74,17 +74,17 @@ function M:update(dt)
     if M.time_step and M.time >= M.time_step then
         local succ = logic:do_op(control:get_op())
         if not succ then
-            M.state = GAME_STATE.LOSE
+            M.state = M.GAME_STATE.LOSE
             return
         end
         M.op_step = M.op_step + 1
         M.time_step = M.time_step + 1
         if not logic:is_win() then
             if M.op_step >= M.count_down then
-                M.state = GAME_STATE.TIMEOUT
+                M.state = M.GAME_STATE.TIMEOUT
             end
         else
-            M.state = GAME_STATE.WIN
+            M.state = M.GAME_STATE.WIN
             if M.cur_level_id < logic.max_level_num then
                 local next_level = M.cur_level_id + 1
                 local navi = require("gameplay.navi")
@@ -100,13 +100,13 @@ function M:draw()
     end
     display:draw(M.time, M.time_start, M.count_down)
     local state_image = nil
-    if M.state == GAME_STATE.WIN then
+    if M.state == M.GAME_STATE.WIN then
         state_image = M.state_win_image
     end
-    if M.state == GAME_STATE.LOSE then
+    if M.state == M.GAME_STATE.LOSE then
         state_image = M.state_lose_image
     end
-    if M.state == GAME_STATE.TIMEOUT then
+    if M.state == M.GAME_STATE.TIMEOUT then
         state_image = M.state_timeout_image
     end
     if state_image and display:is_done() then
@@ -125,17 +125,17 @@ function M:keypressed(key)
         M:quit()
         return
     end
-    if key == "r" and M.state ~= GAME_STATE.WIN and M.state ~= GAME_STATE.PASS then
+    if key == "r" and M.state ~= M.GAME_STATE.WIN and M.state ~= M.GAME_STATE.PASS then
         M:restart()
         return
     end
-    if M.state == GAME_STATE.WIN then
+    if M.state == M.GAME_STATE.WIN then
         if key == "return" then
             if M.cur_level_id < logic.max_level_num then
                 local next_level = M.cur_level_id + 1
                 M:start(next_level)
             else
-                M.state = GAME_STATE.PASS
+                M.state = M.GAME_STATE.PASS
                 M.pass_time = M.time
                 M.cur_level_id = 1
                 M:show_end()
@@ -143,10 +143,10 @@ function M:keypressed(key)
         end
         return
     end
-    if M.state == GAME_STATE.LOSE then
+    if M.state == M.GAME_STATE.LOSE then
         return
     end
-    if M.state == GAME_STATE.PLAYING then
+    if M.state == M.GAME_STATE.PLAYING then
         if control:on_move(key) then
             if not M.time_start then
                 M.time_start = M.time
