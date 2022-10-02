@@ -1,10 +1,14 @@
 local M = {}
 
 M.data = {
+    name = "Hello",
     map = {
         width = 3,
         height = 1,
         info = {
+            " ", " ", "@",
+        },
+        item = {
             " ", " ", "@",
         }
     },

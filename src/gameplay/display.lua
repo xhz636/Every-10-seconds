@@ -6,7 +6,7 @@ M.grid_draw_size = 30
 function M:draw(data)
     M:draw_background()
     M:draw_map(data.map)
-    M:draw_item(data.items)
+    M:draw_item(data.map)
     M:draw_player(data.p1)
     M:draw_player(data.p2)
 end
@@ -33,22 +33,22 @@ function M:draw_map(map)
     end
 end
 
-function M:draw_item(items)
-    if not items then
-        return
-    end
-    for i, item in ipairs(items) do
-        if item.name == "*2" then
-            love.graphics.setColor(0.9, 0.2, 0.2)
-            love.graphics.print("*2", item.x * M.grid_size, item.y * M.grid_size)
-        end
-        if item.name == "/2" then
-            love.graphics.setColor(0.9, 0.2, 0.2)
-            love.graphics.print("/2", item.x * M.grid_size, item.y * M.grid_size)
-        end
-        if item.name == "=1" then
-            love.graphics.setColor(0.9, 0.2, 0.2)
-            love.graphics.print("=1", item.x * M.grid_size, item.y * M.grid_size)
+function M:draw_item(map)
+    for j = 1, map.height do
+        for i = 1, map.width do
+            local object = map.item[(j - 1) * map.width + i]
+            if object == "2" then
+                love.graphics.setColor(0.9, 0.2, 0.2)
+                love.graphics.print("*2", i * M.grid_size, j * M.grid_size)
+            end
+            if object == "0" then
+                love.graphics.setColor(0.9, 0.2, 0.2)
+                love.graphics.print("/2", i * M.grid_size, j * M.grid_size)
+            end
+            if object == "1" then
+                love.graphics.setColor(0.9, 0.2, 0.2)
+                love.graphics.print("=1", i * M.grid_size, j * M.grid_size)
+            end
         end
     end
 end

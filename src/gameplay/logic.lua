@@ -2,8 +2,9 @@ local utils = require("utils")
 
 local M = {}
 
-M.max_level_num = 8
+M.max_level_num = 10
 M.cur_level = nil
+M.cur_level_id = 0
 M.levels = {}
 
 local MOVE_STATE = {
@@ -18,9 +19,10 @@ function M:init()
     end
 end
 
-function M:start_level(level_idx)
-    local level = M.levels[level_idx]
+function M:start_level(level_id)
+    local level = M.levels[level_id]
     M.cur_level = utils:copy_table(level)
+    M.cur_level_id = level_id
 end
 
 function M:get_cur_level()
@@ -127,22 +129,24 @@ local function move_player(map, player, op, other)
     return MOVE_STATE.DONE
 end
 
-local function handle_item(items, player)
-    if not items then
+local function handle_item(map, player)
+    if not map.item or not player then
         return
     end
-    for i, item in ipairs(items) do
-        if item.x == player.x and item.y == player.y then
-            if item.name == "*2" then
-                player.speed = 4
-            elseif item.name == "/2" then
-                player.speed = 1
-            elseif item.name == "=1" then
-                player.speed = 2
-            end
-            table.remove(items, i)
-            break
-        end
+    local object = map.item[(player.y - 1) * map.width + player.x]
+    local get = false
+    if object == "2" then
+        player.speed = 4
+        get = true
+    elseif object == "0" then
+        player.speed = 1
+        get = true
+    elseif object == "1" then
+        player.speed = 2
+        get = true
+    end
+    if get then
+        map.item[(player.y - 1) * map.width + player.x] = " "
     end
 end
 
@@ -182,8 +186,8 @@ function M:do_op(op)
             print(p2.name, p2.x, p2.y)
         end
     end
-    handle_item(level.data.items, p1)
-    handle_item(level.data.items, p2)
+    handle_item(map, p1)
+    handle_item(map, p2)
     return true
 end
 
@@ -191,7 +195,11 @@ function M:is_win()
     local level = M.cur_level
     local succ1 = in_point(level.data.map, level.data.p1)
     local succ2 = in_point(level.data.map, level.data.p2)
-    if not succ1 or not succ2 then
+    if M.cur_level_id < 10 then
+        if not succ1 or not succ2 then
+            return false
+        end
+    elseif not succ1 and not succ2 then
         return false
     end
     return true
